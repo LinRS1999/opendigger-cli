@@ -3,4 +3,5 @@
 build
 dist
 opendigger_cli.egg-info
+*__pycache__
 **/*test*.py
