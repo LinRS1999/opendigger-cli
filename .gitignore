@@ -1,0 +1,6 @@
+.git
+.idea
+build
+dist
+opendigger_cli.egg-info
+**/*test*.py
