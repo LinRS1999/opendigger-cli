@@ -8,8 +8,8 @@
 1. 项目打包为whl
 python setup.py bdist_wheel
 
-2. 进入build文件夹
-cd build
+2. 进入dist文件夹
+cd dist
 
 3. 安装pip
 pip install opendigger_cli-1.0-py3-none-any.whl --force-reinstall
