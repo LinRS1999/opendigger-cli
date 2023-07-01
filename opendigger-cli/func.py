@@ -20,7 +20,16 @@ class Func:
 
     network_metric_list = ['developer_network', 'repo_network', 'project_openrank']
 
-    no_stat_list = []
+    no_stat_metric_list = ['active_dates_and_times', 'new_contributors_detail', 'bus_factor_detail',
+                           'issue_response_time', 'issue_resolution_duration', 'issues_new',
+                           'change_request_response_time', 'change_request_resolution_duration',
+                           'change_request_age', 'activity_details']
+
+    quantile_list_metric_list = ['issue_response_time', 'issue_resolution_duration', 'issues_new',
+                                 'change_request_response_time', 'change_request_resolution_duration',
+                                 'change_request_age']
+
+    quantile_query_list = ['avg', 'levels', 'quantile_0', 'quantile_1', 'quantile_2', 'quantile_3', 'quantile_4']
 
     @staticmethod
     def get_data(metric: str, option: str):
@@ -45,21 +54,29 @@ class Func:
             result_dict[metric]['month'] = dict()
             result_dict[metric]['stat'] = dict()
 
-            response_content = Func.get_data(metric, option)
-
-            # todo 测试一下错误的url的返回值
-            if not response_content:
-                print('error, invaild url')
+            try:
+                response_content = Func.get_data(metric, option)
+            except Exception:
+                print('error, url request fail')
+                return
 
             for month in month_list:
                 if month == 'all':
                     result_dict[metric]['month'] = response_content
                     break
                 else:
-                    try:
-                        result_dict[metric]['month'][month] = response_content[month]
-                    except Exception:
-                        result_dict[metric]['month'][month] = 'none'
+                    if metric in Func.quantile_list_metric_list:
+                        result_dict[metric]['month'][month] = dict()
+                        for item in Func.quantile_query_list:
+                            try:
+                                result_dict[metric]['month'][month][item] = response_content[item][month]
+                            except Exception:
+                                result_dict[metric]['month'][month][item] = 'none'
+                    else:
+                        try:
+                            result_dict[metric]['month'][month] = response_content[month]
+                        except Exception:
+                            result_dict[metric]['month'][month] = 'none'
 
             temp_data = result_dict[metric]['month']
             data = dict()
@@ -70,7 +87,6 @@ class Func:
             if len(stat_list) and len(data.keys()):
                 sorted_data = sorted(data.items(), key=lambda x: x[1])
 
-                # todo 有些指标不支持计算stat，如active_dates_and_times
                 for stat in stat_list:
                     if stat == 'min':
                         minimum_value = sorted_data[0][1]
@@ -91,11 +107,11 @@ class Func:
             result_dict[metric]['node'] = dict()
             result_dict[metric]['edge'] = dict()
 
-            response_content = Func.get_data(metric, option)
-
-            # todo 测试一下错误的url的返回值
-            if not response_content:
-                print('error, invaild url')
+            try:
+                response_content = Func.get_data(metric, option)
+            except Exception:
+                print('error, url request fail')
+                return
 
             preprocess_node_dict = dict()
             preprocess_edge_dict = dict()
@@ -139,14 +155,11 @@ class Func:
                                 result_dict[metric]['edge'][k] = 'none'
                 else:
                     # 要求格式为node1+node2
-                    print(edge)
-                    print(edge.split('+'))
                     (node1, node2) = edge.split('+')
                     try:
                         result_dict[metric]['edge'][edge] = preprocess_edge_dict[node1][node2]
                     except Exception:
                         result_dict[metric]['edge'][edge] = 'none'
-
 
         return result_dict
 
@@ -162,7 +175,7 @@ class Func:
     def executive_request(args):
         repo = args.repo
         user = args.user
-        metric = args.metric
+        metric = args.metric.lower()
         metric_list = args.metric_list
         month = args.month
         stat = args.stat
@@ -220,8 +233,3 @@ class Func:
             print('pdf save xxx')
         else:
             Func.print_result(query_result_dict)
-
-
-
-
-
