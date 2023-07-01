@@ -1,5 +1,6 @@
 import os.path
-
+import fpdf
+import json
 import requests
 
 
@@ -166,14 +167,36 @@ class Func:
         return result_dict
 
     @staticmethod
-    def print_result(result_dict):
+    def print_result(result_dict, args):
+        repo_name = args.repo.split('/')[-1]
+        print(f'repo name: {repo_name}')
+        print(f'repo url: https://github.com/{args.repo}')
+        result_json = json.dumps(result_dict, indent=4)
+        print(result_json)
         pass
 
     @staticmethod
-    def ouput_pdf(result_dict, save_path):
-        path = 'xx'
+    def ouput_pdf(result_dict, save_path, args):
+        output_path = f'{save_path}report.pdf' if save_path[-1] == '/' else f'{save_path}/report.pdf'
+        pdf = fpdf.FPDF(format='letter', unit='in')
+        pdf.add_page()
+        pdf.set_font('Times', '', 13)
+        pdf.set_line_width(0.5)
+        effective_page_width = pdf.w - 2*pdf.l_margin
+        repo_name = args.repo.split('/')[-1]
+        result_json = json.dumps(result_dict, indent=4)
+        pdf.multi_cell(effective_page_width, 0.3, f'repo name: {repo_name}')
+        pdf.multi_cell(effective_page_width, 0.3, f'repo url: https://github.com/{args.repo}')
+        pdf.multi_cell(effective_page_width, 0.3, result_json)
+        # for item in result_dict:
+        #     pdf.multi_cell(effective_page_width, 0.2, f'{item}: {result_dict[item]}')
+            # print(f"{item}: {result_dict[item]}")
+        # pdf.image('./structure.png',w=6, h=6)
+        # for item in args:
+        #     pdf.multi_cell(effective_page_width, 0.2, f'{item[0]}: {item[1]}')
+        pdf.output(output_path, 'F')
 
-        return path
+        return output_path
 
     @staticmethod
     def executive_request(args):
@@ -235,13 +258,10 @@ class Func:
                                        stat_list=stat_list, node_list=node_list, edge_list=edge_list)
 
         # debug
-        print(query_result_dict)
+        # print(query_result_dict)
 
         if download:
-            output_path = Func.ouput_pdf(query_result_dict, save_path)
+            output_path = Func.ouput_pdf(query_result_dict, save_path, args)
             print('[INFO] the pdf output is completed and saved at ', output_path)
         else:
-            Func.print_result(query_result_dict)
-
-        print()
-        print()
+            Func.print_result(query_result_dict, args)
