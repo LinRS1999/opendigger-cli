@@ -1,3 +1,5 @@
+import os.path
+
 import requests
 
 
@@ -57,7 +59,7 @@ class Func:
             try:
                 response_content = Func.get_data(metric, option)
             except Exception:
-                print('error, url request fail')
+                print('[ERROR] request data failed, please check if the input is correct')
                 return
 
             for month in month_list:
@@ -110,7 +112,7 @@ class Func:
             try:
                 response_content = Func.get_data(metric, option)
             except Exception:
-                print('error, url request fail')
+                print('[ERROR] request data failed, please check if the input is correct')
                 return
 
             preprocess_node_dict = dict()
@@ -169,7 +171,9 @@ class Func:
 
     @staticmethod
     def ouput_pdf(result_dict, save_path):
-        pass
+        path = 'xx'
+
+        return path
 
     @staticmethod
     def executive_request(args):
@@ -185,17 +189,21 @@ class Func:
         edge = args.edge
 
         if repo and user:
-            print('error, you can only choose one')
+            print('[ERROR] Only one of repo and user can be chosen')
             return
         if not repo and not user:
-            print('error, you must choose one')
+            print('[ERROR] One of repo and user must be chosen')
             return
 
         if metric_list:
             if repo:
-                print(Func.repo_metric_list)
+                print('[INFO] The optional metric for the repo is')
+                for item in Func.repo_metric_list:
+                    print(item)
             else:
-                print(Func.user_metric_list)
+                print('[INFO] The optional metric for the user is')
+                for item in Func.user_metric_list:
+                    print(item)
             return
 
         option = repo if repo else user
@@ -216,20 +224,24 @@ class Func:
             elif metric in Func.repo_metric_list:
                 simple_metric_list.append(metric)
             else:
-                print(f'error, {metric} not exist')
+                print(f'[ERROR] {metric} does not exist')
 
         if len(network_metric_list) > 0 and len(network_metric_list) != len(temp_metric_list):
-            print('error, 不能同时查询网络和非网络指标')
+            print('[ERROR] can not query network and non-network metrics at the same time')
             return
 
         query_result_dict = Func.query(option=option, simple_metric_list=simple_metric_list,
                                        network_metric_list=network_metric_list, month_list=month_list,
                                        stat_list=stat_list, node_list=node_list, edge_list=edge_list)
 
+        # debug
         print(query_result_dict)
 
         if download:
-            Func.ouput_pdf(query_result_dict, save_path)
-            print('pdf save xxx')
+            output_path = Func.ouput_pdf(query_result_dict, save_path)
+            print('[INFO] the pdf output is completed and saved at ', output_path)
         else:
             Func.print_result(query_result_dict)
+
+        print()
+        print()
