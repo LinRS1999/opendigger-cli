@@ -5,20 +5,20 @@ class Func:
     url_start = 'https://oss.x-lab.info/open_digger/github/'
     url_end = '.json'
 
-    repo_metric_list = ['openrank', 'activity', 'attention', 'active dates and times',
-                   'stars', 'technical fork', 'participants', 'new contributors',
-                   'new contributors detail', 'inactive contributors', 'bus factor',
-                   'bus factor detail', 'issues new', 'issues closed', 'issue comments',
-                   'issue response time', 'issue resolution duration', 'issue age',
-                   'code change lines add', 'code change lines remove',
-                   'code change lines sum', 'change requests', 'change requests accepted',
-                   'change requests reviews', 'change request response time',
-                   'change request resolution duration', 'change request age',
-                   'activity details', 'developer network', 'repo network', 'project openrank detail']
+    repo_metric_list = ['openrank', 'activity', 'attention', 'active_dates_and_times',
+                        'stars', 'technical_fork', 'participants', 'new_contributors',
+                        'new_contributors_detail', 'inactive_contributors', 'bus_factor',
+                        'bus_factor_detail', 'issues_new', 'issues_closed', 'issue_comments',
+                        'issue_response_time', 'issue_resolution_duration', 'issue_age',
+                        'code_change_lines_add', 'code_change_lines_remove',
+                        'code_change_lines_sum', 'change_requests', 'change_requests_accepted',
+                        'change_requests_reviews', 'change_request_response_time',
+                        'change_request_resolution_duration', 'change_request_age',
+                        'activity_details', 'developer_network', 'repo_network', 'project_openrank_detail']
 
-    user_metric_list = ['openrank', 'activity', 'developer network', 'repo network']
+    user_metric_list = ['openrank', 'activity', 'developer_network', 'repo_network']
 
-    network_metric_list = ['developer network', 'repo network', 'project openrank']
+    network_metric_list = ['developer_network', 'repo_network', 'project_openrank']
 
     no_stat_list = []
 
@@ -42,6 +42,9 @@ class Func:
 
         for metric in simple_metric_list:
             result_dict[metric] = dict()
+            result_dict[metric]['month'] = dict()
+            result_dict[metric]['stat'] = dict()
+
             response_content = Func.get_data(metric, option)
 
             # todo 测试一下错误的url的返回值
@@ -50,38 +53,44 @@ class Func:
 
             for month in month_list:
                 if month == 'all':
-                    result_dict[metric] = response_content
+                    result_dict[metric]['month'] = response_content
                     break
                 else:
                     try:
-                        result_dict[metric][month] = response_content[month]
+                        result_dict[metric]['month'][month] = response_content[month]
                     except Exception:
-                        result_dict[metric][month] = 'none'
+                        result_dict[metric]['month'][month] = 'none'
 
-            data = result_dict[metric]
+            temp_data = result_dict[metric]['month']
+            data = dict()
+            for k, v in temp_data.items():
+                if v != 'none':
+                    data[k] = v
 
-            sorted_data = None
-            if len(stat_list):
+            if len(stat_list) and len(data.keys()):
                 sorted_data = sorted(data.items(), key=lambda x: x[1])
 
-            # todo 有些指标不支持计算stat，如active_dates_and_times
-            for stat in stat_list:
-                if stat == 'min':
-                    minimum_value = sorted_data[0][1]
-                    minimum_keys = [item[0] for item in sorted_data if item[1] == minimum_value]
-                    result_dict[metric]['min'] = (minimum_value, minimum_keys)
-                elif stat == 'max':
-                    maximum_value = sorted_data[-1][1]
-                    maximum_keys = [item[0] for item in sorted_data if item[1] == maximum_value]
-                    result_dict[metric]['max'] = (maximum_value, maximum_keys)
-                else:
-                    middle_index = len(sorted_data) // 2
-                    middle_value = sorted_data[middle_index][1]
-                    middle_keys = [item[0] for item in sorted_data if item[1] == middle_value]
-                    result_dict[metric]['avg'] = (middle_value, middle_keys)
+                # todo 有些指标不支持计算stat，如active_dates_and_times
+                for stat in stat_list:
+                    if stat == 'min':
+                        minimum_value = sorted_data[0][1]
+                        minimum_keys = [item[0] for item in sorted_data if item[1] == minimum_value]
+                        result_dict[metric]['stat']['min'] = (minimum_value, minimum_keys)
+                    elif stat == 'max':
+                        maximum_value = sorted_data[-1][1]
+                        maximum_keys = [item[0] for item in sorted_data if item[1] == maximum_value]
+                        result_dict[metric]['stat']['max'] = (maximum_value, maximum_keys)
+                    else:
+                        middle_index = len(sorted_data) // 2
+                        middle_value = sorted_data[middle_index][1]
+                        middle_keys = [item[0] for item in sorted_data if item[1] == middle_value]
+                        result_dict[metric]['stat']['avg'] = (middle_value, middle_keys)
 
         for metric in network_metric_list:
             result_dict[metric] = dict()
+            result_dict[metric]['node'] = dict()
+            result_dict[metric]['edge'] = dict()
+
             response_content = Func.get_data(metric, option)
 
             # todo 测试一下错误的url的返回值
@@ -100,14 +109,12 @@ class Func:
                 preprocess_edge_dict[node1][node2] = weight
                 preprocess_edge_dict[node2][node1] = weight
 
-            result_dict[metric]['node'] = dict()
-
             for node in node_list:
                 if node == 'all':
                     for item in response_content['nodes']:
                         result_dict[metric]['node'][item[0]] = dict()
                         result_dict[metric]['node'][item[0]]['weight'] = item[1]
-                        result_dict[metric]['node'][item[0]]['neighbor'] = preprocess_edge_dict[item[0]].keys()
+                        result_dict[metric]['node'][item[0]]['neighbor'] = list(preprocess_edge_dict[item[0]].keys())
                     break
                 else:
                     result_dict[metric]['node'][node] = dict()
@@ -117,52 +124,29 @@ class Func:
                         result_dict[metric]['node'][node]['weight'] = 'none'
 
                     try:
-                        result_dict[metric]['node'][node]['neighbor'] = preprocess_edge_dict[node].keys()
+                        result_dict[metric]['node'][node]['neighbor'] = list(preprocess_edge_dict[node].keys())
                     except Exception:
                         result_dict[metric]['node'][node]['neighbor'] = 'none'
 
             for edge in edge_list:
-                node1, node2 = edge
-                try:
-                    result_dict[metric]
-
-
-            result_dict[metric]['node'] = dict()
-            for node in node_list:
-                if node == 'all':
-                    for item in response_content['nodes']:
-                        weight = item[1]
-
-                        result_dict[metric]['node'][item[0]] = item[1]
-                    break
+                if edge == 'all':
+                    for node1, node2_list in preprocess_edge_dict.items():
+                        for node2 in node2_list:
+                            k = node1 + '+' + node2
+                            try:
+                                result_dict[metric]['edge'][k] = preprocess_edge_dict[node1][node2]
+                            except Exception:
+                                result_dict[metric]['edge'][k] = 'none'
                 else:
-                    flag = False
-                    for item in response_content['nodes']:
-                        if item[0] == node:
-                            result_dict[metric]['node'][node] = item[1]
-                            flag = True
-                            break
+                    # 要求格式为node1+node2
+                    print(edge)
+                    print(edge.split('+'))
+                    (node1, node2) = edge.split('+')
+                    try:
+                        result_dict[metric]['edge'][edge] = preprocess_edge_dict[node1][node2]
+                    except Exception:
+                        result_dict[metric]['edge'][edge] = 'none'
 
-                    if not flag:
-                        result_dict[metric]['node'][node] = 'none'
-
-            for edge in edge_list:
-                if
-
-
-            if find_flag:
-                result_dict[metric]['nodes'] = response_content['nodes']
-
-            for item in find_neighbor_list:
-                connected_nodes = list()
-                for edge in response_content['edges']:
-                    node1, node2, weight = edge
-                    if node1 == item:
-                        connected_nodes.append((node2, weight))
-                    elif node2 == item:
-                        connected_nodes.append((node1, weight))
-
-                result_dict[metric][item] = connected_nodes
 
         return result_dict
 
@@ -185,7 +169,7 @@ class Func:
         download = args.download
         save_path = args.save_path
         node = args.node
-        edge = args.egde
+        edge = args.edge
 
         if repo and user:
             print('error, you can only choose one')
@@ -216,10 +200,12 @@ class Func:
         for metric in temp_metric_list:
             if metric in Func.network_metric_list:
                 network_metric_list.append(metric)
-            else:
+            elif metric in Func.repo_metric_list:
                 simple_metric_list.append(metric)
+            else:
+                print(f'error, {metric} not exist')
 
-        if len(network_metric_list) > 0 and len(network_metric_list) != len(simple_metric_list):
+        if len(network_metric_list) > 0 and len(network_metric_list) != len(temp_metric_list):
             print('error, 不能同时查询网络和非网络指标')
             return
 

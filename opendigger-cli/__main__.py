@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
-from .func import Func
-
+# from .func import Func
+from func import Func
 
 def setup_parser():
     parser = ArgumentParser()
@@ -18,8 +18,8 @@ def setup_parser():
     parser.add_argument('--download', action='store_true', help='')
     parser.add_argument('--save_path', type=str, default='./', help='')
 
-    parser.add_argument('--node', type=str, default='all', help='')
-    parser.add_argument('--edge', type=str, default='all', help='')
+    parser.add_argument('--node', type=str, default='', help='')
+    parser.add_argument('--edge', type=str, default='', help='')
 
     parser.set_defaults(func=Func.executive_request)
 
