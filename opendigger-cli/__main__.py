@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
-# from .func import Func
-from func2 import OpenDiggerCLI
+from .func import OpenDiggerCLI
 
 def setup_parser():
     parser = ArgumentParser()

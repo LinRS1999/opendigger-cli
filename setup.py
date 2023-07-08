@@ -1,5 +1,9 @@
 from setuptools import setup
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 setup(name='opendigger-cli',
       version='1.0',
-      packages=['opendigger-cli'])
+      packages=['opendigger-cli'],
+      install_requires=requirements)
