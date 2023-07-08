@@ -1,12 +1,14 @@
 import fpdf
 import json
 import requests
+from draw_picture import picture
 
 
 class OpenDiggerCLI:
     def __init__(self):
         self.url_start = 'https://oss.x-lab.info/open_digger/github/'
         self.url_end = '.json'
+        self.response_contents = []
 
         self.repo_metric_list = ['openrank', 'activity', 'attention', 'active_dates_and_times',
                             'stars', 'technical_fork', 'participants', 'new_contributors',
@@ -36,6 +38,7 @@ class OpenDiggerCLI:
 
         self.result_dict = dict()  # 每次query更新
 
+
     def get_data(self, metric: str, option: str) -> dict:
         """
         以HTTPS URL的形式获取json数据
@@ -52,15 +55,17 @@ class OpenDiggerCLI:
 
         return response_content
 
+
     def query_month(self, metric_list: list, month_list: list, stat_list: list, option: str):
 
-        for metric in metric_list:
+        for i, metric in enumerate(metric_list):
             self.result_dict[metric] = dict()
             self.result_dict[metric]['month'] = dict()
             self.result_dict[metric]['stat'] = dict()
 
             try:
                 response_content = self.get_data(metric, option)
+                self.response_contents.append(response_content)
             except Exception:
                 print('[ERROR] request data failed, please check if the input is correct')
                 return
@@ -167,13 +172,49 @@ class OpenDiggerCLI:
                     except Exception:
                         self.result_dict[metric]['edge'][edge] = 'none'
 
+    @staticmethod
+    def get_pic_json(metric):
+        if metric in ['openrank', 'activity', 'attention',
+                      'stars', 'technical_fork', 'participants', 'new_contributors',
+                      'inactive_contributors', 'bus_factor',
+                      'issues_new', 'issues_closed', 'issue_comments',
+                      'code_change_lines_add', 'code_change_lines_remove',
+                      'code_change_lines_sum', 'change_requests', 'change_requests_accepted',
+                      'change_requests_reviews']:
+            return True
+        return False
 
 
-    def print_result(self):
-        pass
+    def print_result(self, args):
+        repo_name = args.repo.split('/')[-1]
+        print(f'repo name: {repo_name}')
+        print(f'repo url: https://github.com/{args.repo}')
+        result_json = json.dumps(self.result_dict)
+        print(result_json)
 
-    def output_pdf(self):
-        pass
+    def output_pdf(self, args, simple_metric_list, save_path):
+        output_path_pdf = f'{save_path}report.pdf' if save_path[-1] == '/' else f'{save_path}/report.pdf'
+        output_path_jpg = f'{save_path}picture.jpg' if save_path[-1] == '/' else f'{save_path}/picture.jpg'
+        # print(output_path_jpg)
+        pdf = fpdf.FPDF(format='letter', unit='in')
+        pdf.add_page()
+        pdf.set_font('Times', '', 13)
+        pdf.set_line_width(0.5)
+        effective_page_width = pdf.w - 2*pdf.l_margin
+        repo_name = args.repo.split('/')[-1]
+        result_json = json.dumps(self.result_dict)
+        pdf.multi_cell(effective_page_width, 0.3, f'repo name: {repo_name}')
+        pdf.multi_cell(effective_page_width, 0.3, f'repo url: https://github.com/{args.repo}')
+        pdf.multi_cell(effective_page_width, 0.3, result_json)
+        for i, res in enumerate(self.response_contents):
+            can_print = OpenDiggerCLI.get_pic_json(simple_metric_list[i])
+            if can_print is False:
+                continue
+            # pdf.multi_cell(effective_page_width, 0.3, f'{simple_metric_list[i]}Histogram')
+            pic = picture(f'{simple_metric_list[i]} for {args.repo}', 'time', simple_metric_list[i], res)
+            pic.print_pic(output_path_jpg)
+            pdf.image(output_path_jpg, w=6, h=4.5)
+        pdf.output(output_path_pdf, 'F')
 
 
     def executive_request(self, args):
@@ -230,20 +271,20 @@ class OpenDiggerCLI:
             print('[ERROR] can not query network and non-network metrics at the same time')
             return
 
-        self.query_month(metric_list=metric_list, month_list=month_list, stat_list=stat_list,
+        self.query_month(metric_list=simple_metric_list, month_list=month_list, stat_list=stat_list,
                          option=option)
 
-        self.query_network(metric_list=metric_list, node_list=node_list, edge_list=edge_list,
+        self.query_network(metric_list=network_metric_list, node_list=node_list, edge_list=edge_list,
                            option=option)
 
         # debug
         # print(query_result_dict)
-
+        # print(save_path)
         if download:
-            output_path = self.ouput_pdf(query_result_dict, save_path, args)
+            output_path = self.output_pdf(args, simple_metric_list, save_path)
             print('[INFO] the pdf output is completed and saved at ', output_path)
         else:
-            self.print_result(query_result_dict, args)
+            self.print_result(args)
 
 
 

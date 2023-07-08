@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 # from .func import Func
-from func import Func
+from func2 import OpenDiggerCLI
 
 def setup_parser():
     parser = ArgumentParser()
@@ -21,7 +21,7 @@ def setup_parser():
     parser.add_argument('--node', type=str, default='', help='')
     parser.add_argument('--edge', type=str, default='', help='')
 
-    parser.set_defaults(func=Func.executive_request)
+    # parser.set_defaults(func=OpenDiggerCLI.executive_request)
 
     return parser
 
@@ -29,4 +29,5 @@ def setup_parser():
 if __name__ == '__main__':
     parser = setup_parser()
     args = parser.parse_args()
-    args.func(args)
+    openDiggerCLI = OpenDiggerCLI()
+    openDiggerCLI.executive_request(args)
