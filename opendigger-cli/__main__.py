@@ -11,7 +11,7 @@ def setup_parser():
     parser.add_argument('--metric', type=str, help='input metric')
     parser.add_argument('--metric_list', action='store_true', help='input metric_list')
 
-    parser.add_argument('--month', type=str, default='', help='input month')
+    parser.add_argument('--month', type=str, default='all', help='input month')
 
     parser.add_argument('--stat', type=str, help='min, max, avg')
 
