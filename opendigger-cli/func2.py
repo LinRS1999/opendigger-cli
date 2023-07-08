@@ -194,7 +194,6 @@ class OpenDiggerCLI:
 
     def output_pdf(self, args, simple_metric_list, save_path):
         output_path_pdf = f'{save_path}report.pdf' if save_path[-1] == '/' else f'{save_path}/report.pdf'
-        output_path_jpg = f'{save_path}picture.jpg' if save_path[-1] == '/' else f'{save_path}/picture.jpg'
         # print(output_path_jpg)
         pdf = fpdf.FPDF(format='letter', unit='in')
         pdf.add_page()
@@ -208,9 +207,10 @@ class OpenDiggerCLI:
         pdf.multi_cell(effective_page_width, 0.3, result_json)
         for i, res in enumerate(self.response_contents):
             can_print = OpenDiggerCLI.get_pic_json(simple_metric_list[i])
+            print(i, res)
             if can_print is False:
                 continue
-            # pdf.multi_cell(effective_page_width, 0.3, f'{simple_metric_list[i]}Histogram')
+            output_path_jpg = f'{save_path}picture{i}.jpg' if save_path[-1] == '/' else f'{save_path}/picture{i}.jpg'
             pic = picture(f'{simple_metric_list[i]} for {args.repo}', 'time', simple_metric_list[i], res)
             pic.print_pic(output_path_jpg)
             pdf.image(output_path_jpg, w=6, h=4.5)
