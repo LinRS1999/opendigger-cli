@@ -209,7 +209,6 @@ class OpenDiggerCLI:
         pdf.multi_cell(effective_page_width, 0.3, result_json)
         for i, res in enumerate(self.response_contents):
             can_print = OpenDiggerCLI.get_pic_json(simple_metric_list[i])
-            print(i, res)
             if can_print is False:
                 continue
             output_path_jpg = f'{save_path}picture{i}.jpg' if save_path[-1] == '/' else f'{save_path}/picture{i}.jpg'
@@ -217,6 +216,7 @@ class OpenDiggerCLI:
             pic.print_pic(output_path_jpg)
             pdf.image(output_path_jpg, w=6, h=4.5)
         pdf.output(output_path_pdf, 'F')
+        return output_path_pdf
 
 
     def executive_request(self, args):
