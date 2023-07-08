@@ -182,6 +182,8 @@ class OpenDiggerCLI:
                       'code_change_lines_sum', 'change_requests', 'change_requests_accepted',
                       'change_requests_reviews']:
             return True
+        else:
+            print(f'[WARNING] {metric} can not draw!')
         return False
 
 
