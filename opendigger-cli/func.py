@@ -11,6 +11,7 @@ class OpenDiggerCLI:
         self.url_end = '.json'
         self.response_contents = []
 
+        # repo支持的指标
         self.repo_metric_list = ['openrank', 'activity', 'attention', 'active_dates_and_times',
                             'stars', 'technical_fork', 'participants', 'new_contributors',
                             'new_contributors_detail', 'inactive_contributors', 'bus_factor',
@@ -22,22 +23,26 @@ class OpenDiggerCLI:
                             'change_request_resolution_duration', 'change_request_age',
                             'activity_details', 'developer_network', 'repo_network', 'project_openrank_detail']
 
+        # user支持的指标
         self.user_metric_list = ['openrank', 'activity', 'developer_network', 'repo_network']
 
+        # 网络指标
         self.network_metric_list = ['developer_network', 'repo_network', 'project_openrank']
 
+        # 不支持进行统计计算的指标
         self.no_stat_metric_list = ['active_dates_and_times', 'new_contributors_detail', 'bus_factor_detail',
                                'issue_response_time', 'issue_resolution_duration', 'issues_new',
                                'change_request_response_time', 'change_request_resolution_duration',
                                'change_request_age', 'activity_details']
 
+        # 特殊指标
         self.quantile_list_metric_list = ['issue_response_time', 'issue_resolution_duration', 'issues_new',
                                      'change_request_response_time', 'change_request_resolution_duration',
                                      'change_request_age']
-
         self.quantile_query_list = ['avg', 'levels', 'quantile_0', 'quantile_1', 'quantile_2', 'quantile_3', 'quantile_4']
 
-        self.result_dict = dict()  # 每次query更新
+        # 中间结果
+        self.result_dict = dict()
 
 
     def get_data(self, metric: str, option: str) -> dict:
@@ -58,7 +63,14 @@ class OpenDiggerCLI:
 
 
     def query_month(self, metric_list: list, month_list: list, stat_list: list, option: str):
-
+        """
+        查询月份相关的数据
+        :param metric_list: 待查询的指标数组
+        :param month_list: 待查询的月份数组
+        :param stat_list: 待统计的指标
+        :param option: org/repo 或 owner
+        :return:
+        """
         for i, metric in enumerate(metric_list):
             self.result_dict[metric] = dict()
             self.result_dict[metric]['month'] = dict()
@@ -114,6 +126,14 @@ class OpenDiggerCLI:
                         self.result_dict[metric]['stat']['avg'] = (middle_value, middle_keys)
 
     def query_network(self, metric_list: list, node_list: list, edge_list: list, option: str):
+        """
+        查询网络相关的数据
+        :param metric_list: 待查询的指标数组
+        :param node_list: 待查询的节点数组
+        :param edge_list: 待查询的边数组
+        :param option: org/repo 或 owner
+        :return:
+        """
         for metric in metric_list:
             self.result_dict[metric] = dict()
             self.result_dict[metric]['node'] = dict()
@@ -175,6 +195,11 @@ class OpenDiggerCLI:
 
     @staticmethod
     def get_pic_json(metric):
+        """
+        检查是否能够可视化
+        :param metric: 指标名
+        :return:
+        """
         if metric in ['openrank', 'activity', 'attention',
                       'stars', 'technical_fork', 'participants', 'new_contributors',
                       'inactive_contributors', 'bus_factor',
@@ -188,7 +213,15 @@ class OpenDiggerCLI:
         return False
     @staticmethod
     def print_pic(name, xlabel, ylabel, json_data, path=None):
-
+        """
+        可视化
+        :param name:
+        :param xlabel:
+        :param ylabel:
+        :param json_data:
+        :param path:
+        :return:
+        """
         plt.bar(json_data.keys(), json_data.values())
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
@@ -201,15 +234,27 @@ class OpenDiggerCLI:
         plt.savefig(save_path)
 
     def print_result(self, args):
+        """
+        以json格式输出结果至控制台
+        :param args:
+        :return:
+        """
         repo_name = args.repo.split('/')[-1]
         print(f'repo name: {repo_name}')
         print(f'repo url: https://github.com/{args.repo}')
         result_json = json.dumps(self.result_dict)
         print(result_json)
 
-    def output_pdf(self, args, simple_metric_list, save_path):
+    def output_pdf(self, args, metric_list):
+        """
+        将结果输出至PDF中
+        :param args:
+        :param metric_list:
+        :return:
+        """
+        save_path = args.save_path
         output_path_pdf = f'{save_path}report.pdf' if save_path[-1] == '/' else f'{save_path}/report.pdf'
-        # print(output_path_jpg)
+
         pdf = fpdf.FPDF(format='letter', unit='in')
         pdf.add_page()
         pdf.set_font('Times', '', 13)
@@ -223,11 +268,11 @@ class OpenDiggerCLI:
 
         jpg_list = list()
         for i, res in enumerate(self.response_contents):
-            can_print = OpenDiggerCLI.get_pic_json(simple_metric_list[i])
+            can_print = OpenDiggerCLI.get_pic_json(metric_list[i])
             if can_print is False:
                 continue
             output_path_jpg = f'{save_path}picture{i}.jpg' if save_path[-1] == '/' else f'{save_path}/picture{i}.jpg'
-            OpenDiggerCLI.print_pic(f'{simple_metric_list[i]} for {args.repo}', 'time', simple_metric_list[i], res, output_path_jpg)
+            OpenDiggerCLI.print_pic(f'{metric_list[i]} for {args.repo}', 'time', metric_list[i], res, output_path_jpg)
             jpg_list.append(output_path_jpg)
             pdf.image(output_path_jpg, w=6, h=4.5)
         pdf.output(output_path_pdf, 'F')
@@ -237,8 +282,12 @@ class OpenDiggerCLI:
 
         return output_path_pdf
 
-
     def executive_request(self, args):
+        """
+        解析args中的参数
+        :param args:
+        :return:
+        """
         repo = args.repo
         user = args.user
         metric = args.metric.lower()
@@ -246,7 +295,6 @@ class OpenDiggerCLI:
         month = args.month
         stat = args.stat
         download = args.download
-        save_path = args.save_path
         node = args.node
         edge = args.edge
 
@@ -300,9 +348,9 @@ class OpenDiggerCLI:
 
         # debug
         # print(query_result_dict)
-        # print(save_path)
+
         if download:
-            output_path = self.output_pdf(args, simple_metric_list, save_path)
+            output_path = self.output_pdf(args, temp_metric_list)
             print('[INFO] the pdf output is completed and saved at ', output_path)
         else:
             self.print_result(args)

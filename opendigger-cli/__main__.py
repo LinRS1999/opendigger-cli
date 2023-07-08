@@ -20,8 +20,6 @@ def setup_parser():
     parser.add_argument('--node', type=str, default='', help='')
     parser.add_argument('--edge', type=str, default='', help='')
 
-    # parser.set_defaults(func=OpenDiggerCLI.executive_request)
-
     return parser
 
 
