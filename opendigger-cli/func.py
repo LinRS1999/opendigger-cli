@@ -233,19 +233,21 @@ class OpenDiggerCLI:
             save_path = "./picture.jpg"
         plt.savefig(save_path)
 
-    def print_result(self, args):
-        """
-        以json格式输出结果至控制台
-        :param args:
-        :return:
-        """
-        repo_name = args.repo.split('/')[-1]
-        print(f'repo name: {repo_name}')
-        print(f'repo url: https://github.com/{args.repo}')
-        result_json = json.dumps(self.result_dict)
-        print(result_json)
+    def print_result(self, option):
+        if '/' in option:
+            print(f'repo name: {option}')
+            print(f'repo url: https://github.com/{option}')
+        else:
+            print(f'user name: {option}')
+            print(f'user url: https://github.com/{option}')
 
-    def output_pdf(self, args, metric_list):
+        print()
+
+        for key, value in self.result_dict.items():
+            print(key)
+            print(value)
+
+    def output_pdf(self, args, option, metric_list):
         """
         将结果输出至PDF中
         :param args:
@@ -260,10 +262,15 @@ class OpenDiggerCLI:
         pdf.set_font('Times', '', 13)
         pdf.set_line_width(0.5)
         effective_page_width = pdf.w - 2*pdf.l_margin
-        repo_name = args.repo.split('/')[-1]
+
         result_json = json.dumps(self.result_dict)
-        pdf.multi_cell(effective_page_width, 0.3, f'repo name: {repo_name}')
-        pdf.multi_cell(effective_page_width, 0.3, f'repo url: https://github.com/{args.repo}')
+        if '/' in option:
+            pdf.multi_cell(effective_page_width, 0.3, f'repo name: {option}')
+            pdf.multi_cell(effective_page_width, 0.3, f'repo url: https://github.com/{option}')
+        else:
+            pdf.multi_cell(effective_page_width, 0.3, f'user name: {option}')
+            pdf.multi_cell(effective_page_width, 0.3, f'user url: https://github.com/{option}')
+
         pdf.multi_cell(effective_page_width, 0.3, result_json)
 
         jpg_list = list()
@@ -272,7 +279,7 @@ class OpenDiggerCLI:
             if can_print is False:
                 continue
             output_path_jpg = f'{save_path}picture{i}.jpg' if save_path[-1] == '/' else f'{save_path}/picture{i}.jpg'
-            OpenDiggerCLI.print_pic(f'{metric_list[i]} for {args.repo}', 'time', metric_list[i], res, output_path_jpg)
+            OpenDiggerCLI.print_pic(f'{metric_list[i]} for {option}', 'time', metric_list[i], res, output_path_jpg)
             jpg_list.append(output_path_jpg)
             pdf.image(output_path_jpg, w=6, h=4.5)
         pdf.output(output_path_pdf, 'F')
@@ -350,10 +357,10 @@ class OpenDiggerCLI:
         # print(query_result_dict)
 
         if download:
-            output_path = self.output_pdf(args, temp_metric_list)
+            output_path = self.output_pdf(args, option, temp_metric_list)
             print('[INFO] the pdf output is completed and saved at ', output_path)
         else:
-            self.print_result(args)
+            self.print_result(option)
 
 
 
