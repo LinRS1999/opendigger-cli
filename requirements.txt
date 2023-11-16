@@ -1,5 +1,6 @@
-setuptools==68.0.0
-requests~=2.31.0
+setuptools~=68.0.0
+fuzzywuzzy~=0.18.0
 fpdf~=1.7.2
-matplotlib~=3.7.1
-wheel~=0.40.0
+requests~=2.31.0
+matplotlib~=3.7.2
+colorama~=0.4.6

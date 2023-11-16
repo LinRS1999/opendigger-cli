@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from .func import OpenDiggerCLI
+from opendigger_cli.functions import *
 
 def setup_parser():
     parser = ArgumentParser()
@@ -15,7 +15,7 @@ def setup_parser():
     parser.add_argument('--stat', type=str, help='min, max, avg')
 
     parser.add_argument('--download', action='store_true', help='')
-    parser.add_argument('--save_path', type=str, default='./', help='')
+    parser.add_argument('--save_path', type=str, default='', help='')
 
     parser.add_argument('--node', type=str, default='', help='')
     parser.add_argument('--edge', type=str, default='', help='')
@@ -23,8 +23,19 @@ def setup_parser():
     return parser
 
 
-if __name__ == '__main__':
+def main():
     parser = setup_parser()
     args = parser.parse_args()
-    openDiggerCLI = OpenDiggerCLI()
-    openDiggerCLI.executive_request(args)
+
+    metric_list_class = MetricList()
+    metric_list_class.run(args)
+
+    query_month_class = QueryMonth()
+    query_month_class.run(args)
+
+    query_network_class = QueryNetwork()
+    query_network_class.run(args)
+
+
+if __name__ == '__main__':
+    main()
